@@ -1,0 +1,142 @@
+open Read_graph ;;
+
+
+type permutation = int array ;;
+exception Last_Permutation ;;
+
+
+let swap a i j =
+  let tmp = a.(i) in
+  a.(i) <- a.(j) ;
+  a.(j) <- tmp ;;
+
+
+(* Convention Python *)
+let reverse a i j =
+  for k = 0 to (j-i)/2 do
+    swap a (i+k) (j-1-k)
+  done ;;
+
+
+
+
+let first_perm n =
+  Array.init n (fun i -> i) ;;
+
+let next_perm p =
+  let n = Array.length p in
+  let i = ref (n-2) in
+  while !i >= 0 && p.(!i) > p.(!i+1) do
+    decr i
+  done ;
+  if !i < 0 then
+    raise Last_Permutation ;
+  (* In this case, I need to "insert" p.(!i) in the "backward sorted list" of those after him. *)
+  let j = ref (!i+1) in
+  while !j < n && p.(!j) > p.(!i) do
+    incr j
+  done ;
+  decr j ;
+  (* Here : p.(!j) is the one just ABOVE p.(!i) *)
+  swap p !i !j ;
+  (* Now a[i+1:] is exactly sorted backward, we just reverse the array *)
+  reverse p (!i+1) n ;;
+
+
+
+
+(* Soit p une permutation et g un graphe.
+   On note g' le graphe obtenu en renommant (sur le dessin) le sommet i par p.(i)
+   Ecrire une fonction qui renvoie g' en fonction de p et g.
+   /!\ g' est un nouveau graphe dissocié de g.
+   Array.copy autorisé.
+
+   Voir exemple ci-desous.
+ *)
+
+let p = [| 3;1;0;2 |] ;;
+let g_ex = [| [| 1;2 |]; [| 0 |] ; [| 0;3 |] ; [| 2 |] |] ;;
+let c_ex = [| (0,0,0); (0,0,1); (0,0,2); (0,0,3) |] ;;
+let g'_ex = [| [| 3;2 |] ; [| 3 |] ; [| 0 |] ; [| 1; 0 |] |] ;;
+let c'_ex =  [| (0,0,2); (0,0,1); (0,0,3); (0,0,0) |] ;;
+
+
+let permut_array p a =
+  let n = Array.length a in 
+  let b = Array.make n a.(0) in
+  (* We first permutate the adjacency lists.
+     We notice on the example that g'.(u) = g.(p^{-1}(u)) *)
+  for i = 0 to n-1 do
+    b.(p.(i)) <- a.(i)
+  done ;
+  b ;;
+
+
+
+let permut_graph p (color, g) =
+  let n = Array.length g in
+  assert(Array.length p = n) ;
+  let g' = Array.init n (fun i -> Array.copy g.(i)) in
+  let g' = permut_array p g' in
+  let c' = permut_array p color in
+
+  (* We then apply the permutation to each vertex_nb within the adjacency lists *)
+  for u = 0 to n-1 do
+    for j = 0 to Array.length g'.(u) - 1 do
+      let v = g'.(u).(j) in
+      g'.(u).(j) <- p.(v)
+    done ;
+  done ;
+  (c',g') ;;
+  
+  
+  
+  
+  assert(permut_graph p (c_ex, g_ex) = (c'_ex,g'_ex)) ;;
+
+
+
+let nb_edges g =
+  Array.fold_left (fun acc adj -> acc + Array.length adj) 0 g ;;
+
+
+let sort_graph g =
+  for i = 0 to Array.length g - 1 do
+    Array.sort compare g.(i)
+  done ;;
+
+
+
+
+
+let compare (c1, graph1) (c2, graph2) = 
+  let n = Array.length graph1
+  and m = nb_edges graph1 in
+  if Array.length graph2 <> n || nb_edges graph2 <> m then
+    [||]
+  else begin
+    sort_graph graph2 ;
+    let p = first_perm n in
+    let found = ref false in
+    try
+      while !found do
+	let c1', g1' = permut_graph p (c1, graph1) in
+	sort_graph g1' ;
+	found := (c1', g1') = (c2, graph2) ;
+	if !found then
+	  next_perm p
+      done ;
+      p
+    with
+    | Last_Permutation -> [||]
+  end ;;
+      
+
+
+(* QUESTION : expliquer (haut niveau) comment on pourrait am\'eliorer la complexit\'e empirique de ce code.
+--> on permute que parmi des sommets de meme couleur, on classe d'abord.
+
+ *)
+
+
+      

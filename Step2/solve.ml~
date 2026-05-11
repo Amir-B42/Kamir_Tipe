@@ -1,0 +1,273 @@
+open Read_graph ;;
+open Compare_graphs ;;
+
+
+
+
+(* FONCTIONS UTILITAIRES, complètes *)
+
+let rec merge_and_filter u pos l1 l2 =
+  match l1 with
+  | [] -> l2
+  | h::t when h = u || h > pos || List.mem h l2 -> merge_and_filter u pos t l2
+  | h::t -> h::(merge_and_filter u pos t l2) ;;
+
+
+let remove_dupplicates l = List.sort_uniq Stdlib.compare l ;;
+
+
+
+(* Pratique pour le debugging *)
+let print_graph (names, color, g) =
+  for u = 0 to Array.length g - 1 do
+    let (r,gr,b) = color.(u) in
+    Printf.printf "%d %d (%d, %d, %d) " u names.(u) r gr b ;
+    Array.iter (fun v -> Printf.printf "%d " v) g.(u) ;
+    print_string "\n"
+  done ;;
+
+let print_dico d =
+  print_string "{" ;
+  Hashtbl.iter (fun (r,g,b) v ->
+    Printf.printf "(%d,%d,%d) : %d, " r g b v) d;
+  print_string "}\n" ;;
+   
+
+
+
+
+
+(* Pour la fin du Backtracking *)
+let print_solution l =
+  List.iter (fun (u,(r,g,b)) -> Printf.printf "(%d, (%d, %d, %d)) " u r g b) l ;
+  print_string "\n" ;;
+
+
+
+
+
+
+(* FIN FONCTIONS UTILITAIRES *)
+
+
+
+
+
+
+
+
+let apply_color c u (names, colors, g) =
+  let n = Array.length g in
+  assert(Array.length colors = n) ;
+  assert(Array.length names = n) ;
+  assert(0 <= u && u < n) ;
+
+  (* On commence par créer une permutation qui permet de placer
+     en fin de tableau les sommets qui vont disparaitre,
+     cad les voisins de u qui sont de couleur c *)
+  let perm = Array.make n (-1) in
+  let pos = ref (n-1) in
+  for i = 0 to Array.length g.(u)-1 do
+    let v = g.(u).(i) in
+    if colors.(v) = c then begin
+      perm.(v) <- !pos ;
+      (* Printf.printf "%d %d " v perm.(v);*)
+      decr pos
+    end
+  done;
+  (* print_string "\n" ;*)
+  let k = ref 0 in
+  for i = 0 to n-1 do
+    if perm.(i) = -1 then begin
+      perm.(i) <- !k ;
+      (* Printf.printf "%d %d " i perm.(i); *)
+      incr k
+    end
+  done ;
+
+  assert(!k = !pos+1) ;
+  (* Printf.printf "\n%d %d\n" u perm.(u) ; *)
+  assert(perm.(u) <= !pos) ;
+
+  (* On applique la permutation au graphe *)
+  let (c',g') = permut_graph perm (colors,g) in
+  let names' = permut_array perm names in
+
+  (* On retire les sommets qui disparaissent *)
+  let g'' = Array.sub g' 0 (!pos+1) in
+  let c'' = Array.sub c' 0 (!pos+1) in
+  let names'' = Array.sub names' 0 (!pos+1) in
+
+  (* On remplace les sommets disparus par u dans les listes d'adjacence. *)
+  for u' = 0 to !pos do
+    for i = 0 to Array.length g''.(u') - 1 do
+      let v = g''.(u').(i) in
+      if v > !pos then
+	g''.(u').(i) <- perm.(u)
+    done ;
+    (* CELA PEUT GENERER DES DOUBLONS DANS LES LISTES D'ADJACENCE !!! *)
+    g''.(u') <- Array.of_list (remove_dupplicates (Array.to_list g''.(u')))
+  done ;
+  
+  (* Puis r\'eciproquement, on ajoute dans g.(u) les voisins des sommets qui disparaissent *)
+  (* sauf que maintenant u s'appelle perm.(u).
+   ET on s'assure que u NE SOIT PAS voisin de lui m\^eme *)
+  c''.(perm.(u)) <- c ;
+  let list = ref (merge_and_filter perm.(u) !pos (Array.to_list g''.(perm.(u))) [])  in
+  for k = n-1 downto !pos+1 do
+    list := merge_and_filter perm.(u) !pos (Array.to_list g'.(k)) !list
+  done;
+  g''.(perm.(u)) <- Array.of_list !list ;
+
+
+
+  (* On renvoie le tout *)
+  (names'', c'', g'') ;;
+  
+
+
+
+(* III - BACKTRACKING *)
+
+
+
+let occ_colors color =
+  let d = Hashtbl.create 20 in
+  Array.iter
+    (fun c -> match Hashtbl.find_opt d c with
+    | None -> Hashtbl.add d c 1
+    | Some occ -> Hashtbl.replace d c (occ+1)
+    ) color ;
+  d ;;
+
+
+
+
+
+let decrement_occ d c qte =
+  match Hashtbl.find_opt d c with
+  | None -> failwith "Precondition non respectee"
+  | Some occ -> begin
+      match occ - qte with
+      | 0 -> Hashtbl.remove d c
+      | k when k > 0 -> Hashtbl.replace d c k
+      | _ -> failwith "Precondition non respectee"
+  end ;;
+
+let increment_occ d c qte =
+  match Hashtbl.find_opt d c with
+  | None -> Hashtbl.add d c qte
+  | Some occ -> Hashtbl.replace d c (qte + occ) ;;
+      
+
+let solve_backtrack (colors,g) =
+  let n = Array.length g in
+  assert(Array.length colors = n) ;
+  (* Noms initial des sommets, pour pouvoir reconstituer la solution *)
+  let names = Array.init n (fun i -> i) in
+  let sol = ref [] in
+
+  (* Meilleur solution jusque la *)
+  let opt_steps = ref n in
+  let opt_sol = ref [] in
+
+  let d = occ_colors colors in
+  
+  let rec aux (names, colors, g) nb_steps =
+
+    (* BEGIN DEBUGGING
+    Printf.printf "aux started, nb_steps = %d \n" nb_steps ;
+    print_graph (names, colors, g) ;
+    Printf.printf "Current solution : " ;
+    print_solution !sol ;
+    Printf.printf "Optimal solution so far : " ;
+    print_solution !opt_sol ;
+    print_dico d ;
+
+    flush(stdout) ;
+
+    let _ = read_int () in () ;
+    END DEBUGGING *)
+    
+
+
+    
+    let n = Array.length g in
+    assert(Array.length names = n) ;
+    assert(Array.length colors = n) ;
+
+    match n with
+      (* Cas de base positif *)
+    | 1 when nb_steps < !opt_steps -> 
+	opt_steps := nb_steps ;
+	opt_sol := !sol
+	    (* Cas de base négatif *)
+    | 1 -> ()
+	  (* Cas d'échec *)
+    | n when nb_steps + Hashtbl.length d - 1 >= !opt_steps -> ()
+    | n ->
+	(* Pour chaque sommet, on essaie de lui appliquer la couleur d'un de ses voisins *)
+	for u = 0 to n-1 do
+	  let possible_colors =
+	    assert(Array.for_all (fun v -> 0 <= v && v < n) g.(u)) ;
+	    remove_dupplicates (Array.to_list (Array.map (fun v -> colors.(v)) g.(u))) in
+	  List.iter (fun c ->
+	    let (names', colors', g') = apply_color c u (names, colors, g) in
+	    (* MAJ solution courante et dictionnaire d *)
+	    sol := (names.(u), c) :: !sol ;
+	    decrement_occ d colors.(u) 1 ;
+	    decrement_occ d c (n - Array.length g' - 1) ;
+	    aux (names', colors', g') (nb_steps+1) ;
+	    (* On efface nos traces *)
+	    sol := List.tl !sol ;
+	    increment_occ d colors.(u) 1 ;
+	    increment_occ d c (n- Array.length g' - 1)	
+	    ) possible_colors
+	done
+  in aux (names, colors, g) 0 ;
+  !opt_steps, List.rev !opt_sol ;;
+
+
+
+
+
+
+
+let inverse_perm p u =
+  let n = Array.length p in
+  let i = ref 0 in
+  while !i < n && p.(!i) <> u do
+    incr i
+  done ;
+  !i ;;
+
+
+let display_solution graph sol =
+  let n = Array.length (fst graph) in
+  let names = Array.init n (fun i -> i) in
+  let s = ref sol in
+  let g = ref (names, fst graph, snd graph) in
+  print_graph !g ;
+  while !s <> [] do
+    let (u,c) = List.hd !s in
+    let (r,gr,b) = c in
+    s := List.tl !s ;
+    let (names,_,_) = !g in
+    let origin_u = inverse_perm names u in
+    g := apply_color c origin_u !g ;
+    Printf.printf "Applying color (%d,%d,%d) to vertex %d (aka %d) we get : \n" r gr b u origin_u ; 
+    print_graph !g
+  done ;;
+
+
+
+let main () =
+  if Array.length Sys.argv <> 2 then
+    raise (Invalid_argument ("Wrong number of arguments for command " ^ Sys.argv.(0))) ;
+  let filename = Sys.argv.(1) in
+  let g1 = read_graph filename  in 
+  let nb_steps,sol = solve_backtrack g1 in 
+  print_solution sol ;;
+    
+
+main () ;;

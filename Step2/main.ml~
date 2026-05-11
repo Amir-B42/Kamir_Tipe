@@ -1,0 +1,21 @@
+
+
+      (* Question : mentionner cas d'erreur `a triater dans fct main *)
+
+let main () =
+  if Array.length Sys.argv <> 3 then
+    raise (Invalid_argument ("Wrong number of arguments for command " ^ Sys.argv.(0))) ;
+  let g1 = read_graph Sys.argv.(1)
+  and g2 = read_graph Sys.argv.(2) in
+  let p = compare g1 g2 in
+  if p <> [||] then
+    print_permutation p ;;
+      
+
+
+
+
+(* Question de compilation pour produire executable qui s'appelle ainsi.
+ Commande pour l'utiliser. *)      
+
+

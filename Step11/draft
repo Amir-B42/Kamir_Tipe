@@ -1,0 +1,45 @@
+
+
+
+vertex 1 : 64 92 20
+vertex 5 : 66 94 20
+vertex 8 : 63 91 19
+vertex 9 : 62 90 19
+vertex 12 : 58 84 18
+
+
+
+
+vertex 2 : 150 120 21
+vertex 3 : 132 107 19
+vertex 7 : 137 110 20
+vertex 10 : 131 106 19
+
+
+vertex 4 : 105 28 233
+vertex 6 : 108 29 240
+vertex 11 : 101 27 222
+
+
+vertex 0 : 100 73 93
+
+
+vertex 0 : 100 73 93
+vertex 1 : 62 90 19
+vertex 5 : 62 90 19
+vertex 8 : 62 90 19
+vertex 9 : 62 90 19
+vertex 12 : 62 90 19
+
+
+vertex 4 : 104 28 231
+vertex 6 : 104 28 231
+vertex 11 : 104 28 231
+
+vertex 7 : 137 110 19
+vertex 10 : 137 110 19
+vertex 2 : 137 110 19
+vertex 3 : 137 110 19
+
+
+

@@ -1,0 +1,7 @@
+type permutation = int array ;;
+
+  
+val swap : 'a array -> int -> int -> unit
+val permut_graph : permutation -> graph -> graph
+val compare : graph -> graph -> bool  
+  
