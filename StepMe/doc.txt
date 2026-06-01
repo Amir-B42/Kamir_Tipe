@@ -1,0 +1,18 @@
+NP-Complet :
+-Pb de décision
+-Vérification en O(n**p)
+-Se ramène à tt autre pb np complet via réduction polynomiale   (if not alors c np-difficile)
+
+Docu : 
+
+théorie des jeux analysis :
+https://www.rozmichelle.com/kami2/
+
+
+
+
+
+
+
+
+
