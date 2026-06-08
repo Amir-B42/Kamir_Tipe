@@ -6,7 +6,7 @@ TODO : <br>
 - fusion et solving du pb (fait par le prof ?) <br>
 - Optimiser <br>
 - retranscription en pb NP complet quelconque <br>
-- Voir diff les sommets sont les zones de mm couleurs ou chaque triangle est un sommet <br>
+- Voir diff les sommets sont les zones de mm couleurs ou chaque triangle est un sommet, ou à défaut pouvoir caractériser les zones d'une couleur <br>
 - 
 
 
