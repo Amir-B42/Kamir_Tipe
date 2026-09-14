@@ -6,7 +6,7 @@ open Compare_graphs ;;
 
 (* FONCTIONS UTILITAIRES, complètes *)
 
-let rec merge_and_filter u pos l1 l2 =
+let rec merge_and_filter u pos l1 l2 = (*merges and filters enlève tous les u et les indices plus grd que pos et fait pas entrer les doublons*)
   match l1 with
   | [] -> l2
   | h::t when h = u || h > pos || List.mem h l2 -> merge_and_filter u pos t l2
