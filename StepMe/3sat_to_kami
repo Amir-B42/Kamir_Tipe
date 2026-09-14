@@ -1,0 +1,14 @@
+/* 3-sat : une FNC dont les clauses ont au plus 3 variables
+
+*/
+
+type bool fnc = Var of bool |Neg of fnc |And of fnc |Or of fnc ;;
+
+let random_3sat
+
+
+
+
+
+
+
