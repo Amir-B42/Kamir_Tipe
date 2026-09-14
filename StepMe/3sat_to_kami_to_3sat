@@ -1,10 +1,12 @@
 /* 3-sat : une FNC dont les clauses ont au plus 3 variables
 
 */
+type lit = Var of bool |Neg of bool ;;
+type clause = Or of lit*lit ;;
+type fnc = And of clause*clause ;;
 
-type bool fnc = Var of bool |Neg of fnc |And of fnc |Or of fnc ;;
-
-let random_3sat
+let random_3sat = 
+  let formul ;;
 
 
 
