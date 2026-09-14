@@ -5,7 +5,7 @@ NP-Complet :
 
 Docu : 
 
-théorie des jeux analysis :
+"théorie des jeux" analysis :
 https://www.rozmichelle.com/kami2/
 
 
